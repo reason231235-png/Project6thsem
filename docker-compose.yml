@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  django:
+    build: .
+    restart: always
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env.prod
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    container_name: cozy_clothings_django_container
+    depends_on:
+      - redis
+      - celery
+      - celery_beat
+
+  redis:
+    image: redis:alpine
+    container_name: cozy_clothings_redis_container
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    restart: always
+    command: celery -A cozy_clothings worker --loglevel=info
+    env_file:
+      - .env.prod
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    container_name: cozy_clothings_celery_container
+
+  celery_beat:
+    build: .
+    restart: always
+    command: celery -A cozy_clothings beat --loglevel=info
+    env_file:
+      - .env.prod
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+    container_name: cozy_clothings_celery_beat_container

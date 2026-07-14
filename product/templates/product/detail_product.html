@@ -1,0 +1,108 @@
+{% extends 'user_management/base.html' %}
+{% load cart_extras %}
+{% block title %}{{ product.title }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-5 gap-6 m-6 p-6">
+    <!-- Product Image -->
+    <div class="col-span-3 aspect-w-16 aspect-h-9 shadow-md hover:shadow-2xl duration-200 rounded-xl">
+        <img src="{{ product.image.url }}" alt="{{ product.title }}" class="object-cover w-full h-full rounded-xl">
+    </div>
+
+    <!-- Product Details -->
+    <div class="col-span-2 p-6 bg-gray-100 rounded-xl shadow-md hover:shadow-2xl duration-200">
+        <h1 class="font-mono font-bold text-6xl text-center mb-6">{{ product.title }}</h1>
+        <p class="text-xl mb-4 flex items-center">
+            <i class="fas fa-tag text-blue-500 mr-2"></i><strong>Price:</strong>Rs. {{ product.sale_price }}
+            {% if product.discount_percentage > 0 %}
+            <span class="text-sm text-gray-500 line-through ml-2">Rs. {{ product.price }}</span>
+            {% endif %}
+        </p>
+        <p class="text-xl mb-4 flex items-center">
+            <i class="fas fa-list text-green-500 mr-2"></i><strong>Category:</strong> {{ product.category }}
+        </p>
+        <p class="text-xl mb-4 flex items-center">
+            <i class="fas fa-percentage text-yellow-500 mr-2"></i><strong>Discount:</strong>
+            {{ product.discount_percentage }}%
+        </p>
+        <p class="text-xl mb-4 flex items-center">
+            <i class="fas fa-boxes text-purple-500 mr-2"></i><strong>Stock:</strong> {{ product.quantity }}
+        </p>
+
+        {% if product.description %}
+        <p class="text-gray-700 text-xl mb-4">
+            <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+            <strong>Description:</strong>
+            <br />
+            {{ product.description }}
+        </p>
+        {% endif %}
+
+        {% if user.is_authenticated and product.quantity > 0%}
+        <!-- Quantity Selector -->
+        <div class="flex items-center space-x-4 mb-4">
+            <button type="button" id="quantity-minus"
+                class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center">
+                <i class="fas fa-minus"></i>
+            </button>
+
+            <input type="number" id="quantity" name="quantity"
+                class="w-16 text-center border border-gray-300 rounded focus:ring focus:ring-blue-500" value="1" min="1"
+                max="{{ product.quantity }}" />
+
+            <button type="button" id="quantity-plus"
+                class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <!-- Add to Cart Button -->
+        <button id="cartButton" class="w-full my-2 px-4 py-2 rounded text-white 
+            {% if product|cart_of:user %}bg-red-500 hover:bg-red-600{% else %}bg-blue-500 hover:bg-blue-600{% endif %} 
+            flex items-center justify-center" data-product-id="{{ product.id }}"
+            data-in-cart="{% if product|cart_of:user %}true{% else %}false{% endif %}">
+            <span class="mr-2" id="add-to-cart-btn-text">
+                {% if product|cart_of:user %}
+                Remove from Cart
+                {% else %}
+                Add to Cart
+                {% endif %}
+            </span>
+            <span class="hidden loader w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin"
+                role="status"></span>
+        </button>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- Related Products -->
+{% if related_products %}
+<div class="m-10 px-10 py-12 bg-gray-100 rounded-xl">
+    <h2 class="mb-12 text-2xl text-center flex items-center justify-center">
+        <i class="fas fa-th-list text-blue-500 mr-2"></i> Other Related Products
+    </h2>
+
+    <div class="grid grid-cols-3 gap-6">
+        {% for product in related_products %}
+        <div class="rounded-xl shadow-md hover:shadow-lg transition duration-300">
+            <a href="{% url 'product:detail_product' product.id %}" class="block">
+                <div>
+                    <img src="{{ product.image.url }}" alt="{{ product.title }}"
+                        class="rounded-t-xl object-cover w-full h-40">
+                </div>
+                <div class="p-4 bg-white rounded-b-xl">
+                    <h2 class="text-lg font-semibold mb-2">{{ product.title }}</h2>
+                    <p class="text-gray-500 flex items-center">
+                        <i class="fas fa-tag text-blue-500 mr-2"></i> Price: Rs. {{ product.price }}
+                    </p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% include 'product/snippets/cart_functionalities.html' %}
+{% endblock %}

@@ -1,0 +1,30 @@
+<script>
+    const chatSocket = new WebSocket(`ws://${window.location.host}/ws/auction/{{ auction.id }}/chat/`);
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatMessages = document.getElementById('chat-messages');
+        const messageElement = document.createElement('div');
+        messageElement.innerHTML = `<strong>${data.username}:</strong> ${data.message}`;
+        chatMessages.appendChild(messageElement);
+
+        // Scroll to the bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.getElementById('chat-form').onsubmit = function(e) {
+        e.preventDefault();
+        const messageInput = document.getElementById('chat-message');
+        const message = messageInput.value;
+
+        chatSocket.send(JSON.stringify({
+            'message': message,
+        }));
+
+        messageInput.value = '';
+    };
+</script>

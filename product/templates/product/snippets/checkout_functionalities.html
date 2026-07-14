@@ -1,0 +1,125 @@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function showMessage(message, type) {
+        const messageContainer = $("#message-container");
+        messageContainer
+            .removeClass("hidden")
+            .removeClass("message-success message-error")
+            .addClass(type === "success" ? "message-success" : "message-error")
+            .text(message);
+
+        // Auto-hide message after 3 seconds
+        setTimeout(() => {
+            messageContainer.addClass("hidden").text("");
+        }, 3000);
+    }
+
+    function updateGrandTotalPrice() {
+        let grandTotal = 0;
+        $(".quantity-input").each(function () {
+            const itemId = $(this).data("product-id");
+            const pricePerItem = parseFloat($(this).data("price"));
+            const quantity = parseInt($(this).val());
+            grandTotal += pricePerItem * quantity;
+        });
+
+        // Update the grand total price
+        $("#grand-total-price").text(grandTotal.toFixed(2));
+    }
+
+    function updateTotalPrice(itemId) {
+        const quantityInput = $("#quantity_" + itemId);
+        const pricePerItem = parseFloat(quantityInput.data("price"));
+        const currentQuantity = parseInt(quantityInput.val());
+        const totalPrice = pricePerItem * currentQuantity;
+
+        // Update the total price element
+        $("#total-price-" + itemId).text(totalPrice.toFixed(2));
+
+        // Update the grand total
+        updateGrandTotalPrice();
+    }
+
+    $(document).ready(function () {
+        // Handle the decrement button click using event delegation
+        $(document).on("click", "#quantity-minus", function () {
+            const itemId = $(this).data("id");  // Get the item ID from data-id attribute
+            const quantityInput = $("#quantity_" + itemId);  // Find the corresponding quantity input
+            let currentQuantity = parseInt(quantityInput.val());
+
+            if ((currentQuantity - 1) >= 1) {
+                quantityInput.val(currentQuantity - 1);
+                quantityInput.change();
+            }
+        });
+
+        // Handle the increment button click using event delegation
+        $(document).on("click", "#quantity-plus", function () {
+            const itemId = $(this).data("id");  // Get the item ID from data-id attribute
+            const quantityInput = $("#quantity_" + itemId);  // Find the corresponding quantity input
+            let currentQuantity = parseInt(quantityInput.val());
+            const maxQuantity = parseInt(quantityInput.attr("max"));  // Get the max quantity from the input
+
+            if ((currentQuantity + 1) <= maxQuantity) {
+                quantityInput.val(currentQuantity + 1);
+                quantityInput.change();
+            }
+        });
+
+        $(".remove-item-btn").click(function () {
+            const productId = $(this).data("product-id");
+
+            $.ajax({
+                url: `/products/add-remove-from-cart/${productId}/`,
+                type: "DELETE",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}", // Ensure CSRF token is passed
+                },
+                success: function (response) {
+                    $(`#cart-item-${productId}`).remove();
+                    showMessage(response.message, "success");
+                },
+                error: function (xhr, status, error) {
+                    showMessage(`Failed to remove item: ${error}`, "error");
+                },
+            });
+        });
+
+        $(".quantity-input").change(function () {
+            const itemId = $(this).data("id");
+            const productId = $(this).data("product-id");
+            const updatedQuantity = $(this).val();
+            const maxQuantity = parseInt($(this).attr("max"));
+
+            if (parseInt(updatedQuantity) > maxQuantity) {
+                $(this).val(maxQuantity);
+                alert(`You can only add up to ${maxQuantity} items to the cart.`);
+                return;
+            } else if (parseInt(updatedQuantity) < 1) {
+                $(this).val(1);
+                alert("You must add at least 1 item to the cart.");
+                return;
+            }
+
+            $.ajax({
+                url: `/products/add-remove-from-cart/${productId}/`,
+                type: 'POST',
+                data: {
+                    quantity: updatedQuantity,
+                },
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    console.log("Quantity updated:", response.message);
+                    // Calculate and Update the price with selected quantity
+                    updateTotalPrice(itemId);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error updating quantity:", error);
+                    alert("Failed to update quantity.");
+                }
+            });
+        });
+    });
+</script>

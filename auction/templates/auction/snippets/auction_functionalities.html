@@ -1,0 +1,82 @@
+<script>
+    // Initialize WebSocket connection
+    const auctionId = "{{ auction.id }}";
+    const socket = new WebSocket(`ws://${window.location.host}/ws/auction/${auctionId}/`);
+
+    const statusIndicator = document.querySelector('#status-indicator');
+
+    function updateStatusIndicator(color, animationClass) {
+        statusIndicator.style.width = "20px";
+        statusIndicator.style.height = "20px";
+        statusIndicator.style.margin = "0 auto";
+        statusIndicator.style.borderRadius = "50%";
+        statusIndicator.style.backgroundColor = color;
+        statusIndicator.className = animationClass;
+    }
+
+    socket.onopen = function () {
+        if ("{{ auction_status }}" === "ongoing") {
+            updateStatusIndicator('green', 'glow-green');
+        } else {
+            updateStatusIndicator('red', 'glow-red');
+        }
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        // Handle the new bid data or error
+        if (data.error) {
+            alert(data.error);
+        } else if (data.type === 'auction_end') {
+            const auctionStatus = document.querySelector('#auction-status');
+            auctionStatus.textContent = `Auction Ended!Winner: ${data.winner || 'No winner'} with bid: Rs. ${data.winning_bid || 'N/A'}`;
+            auctionStatus.innerHTML = `Auction Ended!<br>Winner: ${data.winner || 'No winner'}<br>Winning Bid: Rs. ${data.winning_bid || 'N/A'}`;
+            auctionStatus.classList.remove("text-green-600");
+            auctionStatus.classList.add("text-red-600");
+            
+            // Set red glow button
+            updateStatusIndicator('red', 'glow-red');
+
+            // Disable the bidding form
+            const bidForm = document.querySelector('#bid-form');
+            if (bidForm) {
+                bidForm.remove(); // Disable bidding
+            }
+        } else {
+            const bidsList = document.querySelector('#bids-list');
+            const newBid = document.createElement('li');
+            const newCurrentPrice = parseFloat(data.amount).toFixed(2);
+
+            newBid.innerHTML = `<span class="font-semibold">${data.user}</span> bid <span class="text-green-600 font-bold">Rs. ${newCurrentPrice}</span> at ${data.timestamp}`;
+            bidsList.prepend(newBid); // Prepend the new bid to the list
+
+            // Remove "No bids yet" message if it exists
+            const noBidsMessage = document.querySelector('#no-bids-message');
+            if (noBidsMessage) {
+                noBidsMessage.remove();
+            }
+
+            // Update current price on the page
+            document.querySelector('#current-price').textContent = `Rs. ${newCurrentPrice}`;
+        }
+    };
+
+    socket.onclose = function () {
+        updateStatusIndicator('gray', 'WebSocket Connection Lost', '');
+    };
+
+    // Handle form submission for placing a bid
+    document.querySelector('#bid-form').addEventListener('submit', function (event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        const bidAmount = document.querySelector('#bid-amount').value;
+        if (parseFloat(bidAmount) > 0) {
+            // Send the bid amount to the WebSocket server
+            socket.send(JSON.stringify({ 'amount': bidAmount }));
+            document.querySelector('#bid-amount').value = ''; // Clear the input field
+        } else {
+            alert('Please enter a valid bid amount.');
+        }
+    });
+</script>

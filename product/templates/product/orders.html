@@ -1,0 +1,97 @@
+{% extends 'user_management/base.html' %}
+{% block title %}Your Orders{% endblock %}
+{% load static %}
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-semibold mb-6">
+        <i class="fas fa-box-open mr-2 text-gray-400"></i> Your Orders
+    </h1>
+
+    {% if orders %}
+    <div class="overflow-x-auto bg-white shadow-lg rounded-lg">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Order ID
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total Price
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created At
+                    </th>
+                    <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for order in orders %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <i class="fas fa-hashtag mr-2 text-gray-400"></i>{{ order.id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {% if order.status == 'Pending' %}
+                        <span class="text-yellow-500 font-semibold">
+                            <i class="fas fa-clock mr-2"></i>{{ order.status }}
+                        </span>
+                        {% elif order.status == 'Paid' %}
+                        <span class="text-green-500 font-semibold">
+                            <i class="fas fa-credit-card mr-2"></i>{{ order.status }}
+                        </span>
+                        {% else %}
+                        <span class="text-blue-500 font-semibold">
+                            <i class="fas fa-check-circle mr-2"></i>{{ order.status }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <i class="fas fa-rupee-sign mr-2 text-gray-400"></i>Rs. {{ order.total_price }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>{{ order.created_at }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'product:order_detail' order.id %}"
+                            class="text-indigo-600 hover:text-indigo-900 flex items-center space-x-2">
+                            <i class="fas fa-eye"></i>
+                            <span>View Details</span>
+                        </a>
+                        {% if order.status == 'Pending' %}
+                        <a href="{% url 'product:payment' order.id %}"
+                            class="mt-4 ml-4 text-teal-600 hover:text-teal-800 flex items-center space-x-2">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Pay Now</span>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <p class="text-center text-lg font-medium text-gray-600">
+        <i class="fas fa-exclamation-circle mr-2 text-gray-400"></i>
+        You have no orders yet. <br />
+        <a href="{% url 'product:products' %}" class="text-2xl text-pink-500">
+            Browse Products to Make an Order!
+        </a>
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+img.custom-logo {
+    max-height: 10px;  /* Adjust size */
+    width: auto;        /* Maintain aspect ratio */
+}

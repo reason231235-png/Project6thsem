@@ -1,0 +1,115 @@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // function updateCartButton($button, isInCart) {
+    //     const $buttonText = $button.find("#add-to-cart-btn-text");
+    //     $buttonText.text(isInCart ? "Remove from Cart" : "Add to Cart");
+    //     $button.data("in-cart", isInCart);
+    //     $button.toggleClass("bg-red-500 hover:bg-red-600 bg-blue-500 hover:bg-blue-600");
+    // }
+
+    function updateCartButton(button, isInCart) {
+        if (isInCart) {
+            button.text("Remove from Cart");
+            button.removeClass("bg-blue-500 hover:bg-blue-600").addClass("bg-red-500 hover:bg-red-600"); // Red for remove
+        } else {
+            button.text("Add to Cart");
+            button.removeClass("bg-red-500 hover:bg-red-600").addClass("bg-blue-500 hover:bg-blue-600"); // Blue for add
+        }
+
+        // Update the data attribute for isInCart to reflect the new state
+        button.data("in-cart", isInCart);
+    }
+
+    function toggleLoadingState($button, isLoading) {
+        const $spinner = $button.find(".loader");
+        const $buttonText = $button.find("#add-to-cart-btn-text");
+
+        if (isLoading) {
+            $buttonText.text("Processing..."); // Optionally change button text
+            $spinner.removeClass("hidden"); // Show the spinner
+            $button.prop("disabled", true);  // Disable the button while processing
+        } else {
+            $buttonText.text($button.data("in-cart") === "true" ? "Remove from Cart" : "Add to Cart");
+            $spinner.addClass("hidden"); // Hide the spinner
+            $button.prop("disabled", false); // Enable the button once processing is complete
+        }
+    }
+
+    $(document).ready(function () {
+        let quantity = 1;
+
+        $("#quantity-plus").click(function (e) {
+            e.preventDefault();
+            quantity = parseInt($("#quantity").val());
+            quantity += 1;
+            if (quantity > "{{ product.quantity }}") {
+                quantity = "{{ product.quantity }}";
+            }
+            $("#quantity").val(quantity);
+        });
+
+        $("#quantity-minus").click(function (e) {
+            e.preventDefault();
+            quantity = parseInt($("#quantity").val());
+            quantity -= 1;
+            if (quantity < 1) {
+                quantity = 1;
+            }
+            $("#quantity").val(quantity);
+        });
+
+        $("#cartButton").click(function () {
+            const productId = $(this).data("product-id");
+            const isInCart = $(this).data("in-cart") === true;
+            const selectedQuantity = parseInt($("#quantity").val());
+            const maxQuantity = parseInt("{{ product.quantity }}");
+
+            if (selectedQuantity > maxQuantity) {
+                alert(`You can only add up to ${maxQuantity} items to the cart.`);
+                return;
+            }
+
+            if (selectedQuantity < 1) {
+                alert("You must add at least 1 item to the cart.");
+                return;
+            }
+
+            // Disable button while loading
+            toggleLoadingState($(this), true);
+
+            let type;
+            if (isInCart) {
+                type = "DELETE";
+            } else {
+                type = "POST";
+            }
+
+            $.ajax({
+                url: `/products/add-remove-from-cart/${productId}/`,
+                type: type,
+                data: {
+                    quantity: selectedQuantity,
+                },
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function (response) {
+                    // Update the cart button text and classes
+                    updateCartButton($("#cartButton"), !isInCart);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error updating cart:", error);
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.error) {
+                        alert(response.error);
+                    }
+                },
+                complete: function () {
+                    // Enable button after loading
+                    toggleLoadingState($("#cartButton"), false);
+                }
+            });
+        });
+    })
+
+</script>

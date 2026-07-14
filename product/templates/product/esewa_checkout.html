@@ -1,0 +1,27 @@
+{% extends 'user_management/base.html' %} {% load static %}
+{% block title %} Checkout {%endblock %}
+{% block content %}
+<section id="billboard" class="bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <h1 class="section-title text-center mt-4" data-aos="fade-up">
+                {{category.title}}
+            </h1>
+        </div>
+        <div class="container">
+            <form action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST" name="esewa-form">
+                {% for field, value in esewa_fields.items %}
+                <input type="hidden" name="{{ field }}" value="{{ value }}" />
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Pay with eSewa</button>
+            </form>
+            <script>
+                window.onload = function () {
+                    document.forms['esewa-form'].submit();
+                }
+            </script>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
