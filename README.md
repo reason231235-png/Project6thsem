@@ -129,7 +129,7 @@ For major changes, please open an issue first to discuss what you'd like to add 
 ---
 
 ## 📬 Need Help?
-- 📩 Email me: mansijmaharzn@gmail.com  
+- 📩 Email me: reasonmjn.90@gmail.com  
 - 🐛 Create a GitHub issue.
 
 ---
